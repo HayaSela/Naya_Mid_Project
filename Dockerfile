@@ -12,4 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 5. כשהקונטיינר נדלק, תריץ את פייתון עם הקובץ שלנו
-ENTRYPOINT ["python", "stocks_etl.py"]
+# פתיחת פורט 8501 (הפורט הסטנדרטי של Streamlit)
+EXPOSE 8501
+
+# פקודת ההרצה של האתר
+ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
