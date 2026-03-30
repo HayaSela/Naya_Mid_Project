@@ -14,7 +14,7 @@ def extract_data(ticker_symbol, start_date, end_date):
         st.error(f"No data found for {ticker_symbol}.")
         return None, None
     
-    # ????? ?????? ?? ?????? (????? ?-MultiIndex ?? yfinance)
+    
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
         
@@ -23,7 +23,7 @@ def extract_data(ticker_symbol, start_date, end_date):
 
 def transform_data(df):
     df_clean = df.copy()
-    # ??????? ?-Pandas
+    
     df_clean['Daily_Return'] = df_clean['Close'].pct_change()
     df_clean['Cumulative_Return'] = (1 + df_clean['Daily_Return']).cumprod() - 1
     df_clean['MA_20'] = df_clean['Close'].rolling(window=20).mean()
@@ -32,7 +32,7 @@ def transform_data(df):
 # --- UI Setup ---
 st.set_page_config(page_title="Professional Stock Analytics", layout="wide")
 
-# ????? ?????? :chart_with_upwards_trend: ?????? ????? ????
+# :chart_with_upwards_trend: 
 st.title(":chart_with_upwards_trend: Advanced Stock ETL & Business Insights")
 
 # Sidebar
@@ -48,17 +48,20 @@ if st.sidebar.button("Run Analysis"):
         if raw_df is not None:
             df = transform_data(raw_df)
             
-            # --- Business Metrics ---
+# --- Business Metrics ---
             col1, col2, col3 = st.columns(3)
             current_price = df['Close'].iloc[-1]
             total_ret = df['Cumulative_Return'].iloc[-1] * 100
             
+            volatility_pct = df['Daily_Return'].std() * 100
+            
             col1.metric("Current Price", f"${current_price:.2f}")
             col2.metric("Period Return", f"{total_ret:.2f}%")
-            col3.metric("Volatility (Std)", f"{df['Daily_Return'].std():.4f}")
+            
+            col3.metric("Volatility (Std)", f"{volatility_pct:.2f}%")
 
             # --- Candlestick Chart ---
-            # ????? ?????? :candle:
+            
             st.subheader(f":candle: {ticker_input} Candlestick Chart")
             fig_candle = go.Figure(data=[go.Candlestick(x=df['Date'],
                             open=df['Open'], high=df['High'],
@@ -67,19 +70,44 @@ if st.sidebar.button("Run Analysis"):
             st.plotly_chart(fig_candle, use_container_width=True)
 
             # --- Cumulative Return Chart ---
-            # ????? ?????? :rocket:
+            #  rocket:
             st.subheader(":rocket: Investment Growth (Cumulative Return)")
             fig_cum = px.area(df, x='Date', y='Cumulative_Return', title="Growth of $1 Investment")
             st.plotly_chart(fig_cum, use_container_width=True)
 
-            # --- Analyst Recommendations ---
-            # ????? ?????? :bank:
-            st.subheader(":bank: Analyst Sentiments")
-            recs = ticker_obj.recommendations
-            if recs is not None and not recs.empty:
-                st.dataframe(recs.tail(5))
+# --- Recent News ---
+            st.subheader(":newspaper: Latest News")
+            news_list = ticker_obj.news
+            
+            if news_list:
+                #  3 כתבות הראשונות
+                for article in news_list[:3]:
+                    
+                    content = article.get('content', {})
+                    
+                    
+                    title = content.get('title', 'No Title')
+                    
+                    
+                    url_data = content.get('clickThroughUrl') or content.get('canonicalUrl') or {}
+                    link = url_data.get('url', '#')
+                    
+                    
+                    provider = content.get('provider', {})
+                    publisher = provider.get('displayName', 'Unknown publisher')
+                    
+                    
+                    raw_date = content.get('pubDate', 'Unknown time')
+                    if raw_date != 'Unknown time':
+                        pub_time = raw_date.replace('T', ' ')[:16] 
+                    else:
+                        pub_time = raw_date
+                        
+                    
+                    st.markdown(f"🔹 **[{title}]({link})**")
+                    st.caption(f"פורסם על ידי: {publisher} | {pub_time}")
             else:
-                st.write("No recent analyst recommendations found for this ticker.")
+                st.write("No recent news found for this ticker.")
 
             # --- Raw Data ---
             with st.expander("View Processed Data Table"):
