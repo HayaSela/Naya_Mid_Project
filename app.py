@@ -85,18 +85,15 @@ if st.sidebar.button("Run Analysis"):
                     
                     content = article.get('content', {})
                     
-                    
-                    title = content.get('title', 'No Title')
-                    
+                    title = content.get('title', 'No Title')                   
                     
                     url_data = content.get('clickThroughUrl') or content.get('canonicalUrl') or {}
-                    link = url_data.get('url', '#')
-                    
+                    link = url_data.get('url', '#')              
                     
                     provider = content.get('provider', {})
                     publisher = provider.get('displayName', 'Unknown publisher')
                     
-                    
+            
                     raw_date = content.get('pubDate', 'Unknown time')
                     if raw_date != 'Unknown time':
                         pub_time = raw_date.replace('T', ' ')[:16] 
